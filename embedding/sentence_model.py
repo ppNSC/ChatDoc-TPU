@@ -63,14 +63,21 @@ class SentenceModel:
         """
         config = configparser.ConfigParser()
         config.read('config.ini')
-        bmodel_path = config.get('bert_model', 'bmodel_path')
-        token_path = config.get('bert_model', 'token_path')
+        embedding_model = os.getenv("EMBEDDING_MODEL")
+        if embedding_model == "bert_model":
+            self.model_name_or_path = "shibing624/text2vec-base-chinese"
+        elif embedding_model == "bce_embedding":
+            self.model_name_or_path = "maidalun1020/bce-embedding-base_v1"
+        else:
+            logging.warning("Embedding model only support bert_model and bce_embedding, please checkout the env var. Use default bert_model.")
+            embedding_model = "bert_model"
+        bmodel_path = config.get(embedding_model, 'bmodel_path')
+        token_path = config.get(embedding_model, 'token_path')
         dev_id = 0
         if os.getenv("DEVICE_ID"):
             dev_id = int(os.getenv("DEVICE_ID"))
         else:
             logging.warning("DEVICE_ID is empty in env var, use default {}".format(dev_id))
-        self.model_name_or_path = model_name_or_path
         encoder_type = EncoderType.from_string(encoder_type) if isinstance(encoder_type, str) else encoder_type
         if encoder_type not in list(EncoderType):
             raise ValueError(f"encoder_type must be in {list(EncoderType)}")
@@ -78,9 +85,8 @@ class SentenceModel:
         self.max_seq_length = max_seq_length
         self.tokenizer = AutoTokenizer.from_pretrained(token_path)
 
-        self.bert = EngineOV(model_path=bmodel_path,
-                                device_id=dev_id)
-        self.bert.padding_to = 512
+        self.net = EngineOV(model_path=bmodel_path, device_id=dev_id)
+        self.net.padding_to = 512
 
 
     def __str__(self):
@@ -97,32 +103,39 @@ class SentenceModel:
             The dimension of the sentence embeddings, or None if it cannot be determined.
         """
         # Use getattr to safely access the out_features attribute of the pooler's dense layer
-        return getattr(self.bert.pooler.dense, "out_features", None)
+        return getattr(self.net.pooler.dense, "out_features", None)
 
     def get_sentence_embeddings_tpu(self, input_ids, attention_mask, token_type_ids=None):
         """
         Returns the model output by encoder_type as embeddings.
 
-        Utility function for self.bert() method.
+        Utility function for self.net() method.
         """
-        input_ids, attention_mask, token_type_ids = input_ids.numpy(), attention_mask.numpy(), token_type_ids.numpy()
-        if input_ids.shape[1] > self.bert.padding_to:
-            input_ids = input_ids[:, :self.bert.padding_to]
-            attention_mask = attention_mask[:, :self.bert.padding_to]
-            token_type_ids = token_type_ids[:, :self.bert.padding_to]
-        elif input_ids.shape[1] < self.bert.padding_to:
+        input_ids, attention_mask = input_ids.numpy(), attention_mask.numpy()
+        if input_ids.shape[1] > self.net.padding_to:
+            input_ids = input_ids[:, :self.net.padding_to]
+            attention_mask = attention_mask[:, :self.net.padding_to]
+        elif input_ids.shape[1] < self.net.padding_to:
             input_ids = np.pad(input_ids,
-                               ((0, 0), (0, self.bert.padding_to - input_ids.shape[1])),
-                               mode='constant', constant_values=0)
+                            ((0, 0), (0, self.net.padding_to - input_ids.shape[1])),
+                            mode='constant', constant_values=0)
             attention_mask = np.pad(attention_mask,
-                                   ((0, 0), (0, self.bert.padding_to - attention_mask.shape[1])),
-                                   mode='constant', constant_values=0)
-            token_type_ids = np.pad(token_type_ids,
-                                   ((0, 0), (0, self.bert.padding_to - token_type_ids.shape[1])),
-                                   mode='constant', constant_values=0)
-        model_output = self.bert(input_ids.astype(np.float32),
-                                  attention_mask.astype(np.float32),
-                                  token_type_ids.astype(np.float32))
+                                ((0, 0), (0, self.net.padding_to - attention_mask.shape[1])),
+                                mode='constant', constant_values=0)
+        kwargs = {
+            "input_ids": input_ids.astype(np.float32),
+            "attention_mask": attention_mask.astype(np.float32)
+        }
+        if token_type_ids is not None:
+            token_type_ids = token_type_ids.numpy()
+            if token_type_ids.shape[1] > self.net.padding_to:
+                token_type_ids = token_type_ids[:, :self.net.padding_to]
+            elif token_type_ids.shape[1] < self.net.padding_to:
+                token_type_ids = np.pad(token_type_ids,
+                                    ((0, 0), (0, self.net.padding_to - token_type_ids.shape[1])),
+                                    mode='constant', constant_values=0)
+            kwargs["token_type_ids"] = token_type_ids.astype(np.float32)
+        model_output = self.net(**kwargs)
 
         if self.encoder_type == EncoderType.MEAN:
             """

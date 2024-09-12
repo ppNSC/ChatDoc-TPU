@@ -13,6 +13,8 @@ pip3 install dfss -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade
 
 # default param
 llm_model="qwen7b"
+embedding="bert_model"    # bert_model or bce_embedding
+reranker="reranker_model"    # reranker_model or bce_reranker 
 dev_id=0
 server_address="0.0.0.0"
 server_port=""
@@ -56,7 +58,7 @@ parse_args() {
 parse_args "$@"
 
 
-# nltk_data & bert_model is required
+# nltk_data & embedding model & reranker model are required
 if [ ! -d "$HOME/nltk_data" ]; then
     echo "$HOME/nltk_dat does not exist, download..."
     python3 -m dfss --url=open@sophgo.com:ezoo/chatdoc/nltk_data.zip
@@ -69,8 +71,20 @@ else
     echo "$HOME/nltk_dat already exist..."
 fi
 
-# download bert_model
-if [ ! -d "./models/bert_model" ]; then
+# download embedding model
+if [[ "$chip" == "bm1688" ]] && [[ "$embedding" == "bce_embedding" || "$reranker" == "bce_reranker" ]]; then
+    echo "Bm1688 chip not support bce model. Use bge model instead."
+    embedding="bert_model"
+    reranker="reranker_model"
+fi
+
+if [[ "$embedding" == "bce_embedding" && ! -d "./models/bce_embedding" ]]; then
+    echo "./models/bce_embedding does not exist, download..."
+    python3 -m dfss --url=open@sophgo.com:ezoo/chatdoc/bce_embedding.zip
+    unzip bce_embedding.zip -d ./models
+    rm bce_embedding.zip
+    echo "bce_embedding download!"
+elif [ ! -d "./models/bert_model" ]; then
     echo "./models/bert_model does not exist, download..."
     if [ x$chip == x"bm1684x" ]; then
         python3 -m dfss --url=open@sophgo.com:ezoo/chatdoc/bert_model.zip
@@ -85,11 +99,17 @@ if [ ! -d "./models/bert_model" ]; then
     fi
     echo "bert_model download!"
 else
-    echo "bert_model already exist..."
+    echo "embedding model already exist..."
 fi
 
-# download reranker
-if [ ! -d "./models/reranker_model" ]; then
+# download reranker model
+if [[ "$reranker" == "bce_reranker" && ! -d "./models/bce_reranker" ]]; then
+    echo "./models/bce_reranker does not exist, download..."
+    python3 -m dfss --url=open@sophgo.com:ezoo/chatdoc/bce_reranker.zip
+    unzip bce_reranker.zip -d ./models
+    rm bce_reranker.zip
+    echo "bce_reranker download!"
+elif [ ! -d "./models/reranker_model" ]; then
     echo "./models/reranker_model does not exist, download..."
     if [ x$chip == x"bm1684x" ]; then
         python3 -m dfss --url=open@sophgo.com:ezoo/chatdoc/reranker_model.zip
@@ -104,11 +124,13 @@ if [ ! -d "./models/reranker_model" ]; then
     fi
     echo "reranker_model download!"
 else
-    echo "reranker_model already exist..."
+    echo "reranker model already exist..."
 fi
 
 
 export LLM_MODEL=$llm_model
+export EMBEDDING_MODEL=$embedding
+export RERANKER_MODEL=$reranker
 export DEVICE_ID=$dev_id
 
 if [ "$server_port" == "" ]; then

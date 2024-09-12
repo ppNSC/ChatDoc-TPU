@@ -20,10 +20,11 @@ class EngineOV:
         self.output_names = self.net.get_output_names(self.graph_name)
 
 
-    def __call__(self, input_ids, attention_mask, token_type_ids):
+    def __call__(self, input_ids, attention_mask, token_type_ids=None):
         input_data = {self.input_names[0]: input_ids,
-                      self.input_names[1]: attention_mask,
-                      self.input_names[2]: token_type_ids}
+                      self.input_names[1]: attention_mask}
+        if token_type_ids is not None:
+            input_data[self.input_names[2]] = token_type_ids
         outputs = self.net.process(self.graph_name, input_data)
         return  outputs[self.output_names[0]]
 

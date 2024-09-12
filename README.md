@@ -59,11 +59,14 @@ pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple && 
         |-- uploaded      -- 已上传文件目录
     |-- models
         |-- bert_model    -- BERT 模型
+        |-- reranker_model-- Reranker 模型
+        |-- bce_embedding -- Embedding 模型
+        |-- bce_reranker  -- Reranker 模型
     |-- chat
         |-- chatbot.py    -- ChatDoc业务逻辑脚本
-        |-- charglm3      -- charglm3 代码
-        |-- qwen          -- qwen 代码
     |-- embedding         -- 文本嵌入模型
+    |-- reranker          -- 重排序模型
+    |-- scripts           -- 模型转换脚本
     |-- docs              -- 环境安装文档
     |-- static            -- README中图片文件
     |-- README.md         -- README
@@ -94,8 +97,10 @@ usage: ./run.sh  [--dev_id DEV_ID] [--server_address SERVER_ADDRESS] [--server_p
 >1. 在 `config.ini` 中可修改模型路径，默认使用int4模型
 >2. dev_id 需设置为 SophGo 设备id
 >3. 默认使用 2k seq_len 模型，如果需要其他参数的模型，可参考[ChatGLM3模型导出与编译](https://github.com/sophgo/sophon-demo/blob/release/sample/ChatGLM3/docs/ChatGLM3_Export_Guide.md)和[Qwen模型导出与编译](https://github.com/sophgo/sophon-demo/blob/release/sample/Qwen/docs/Qwen_Export_Guide.md)
->4. embedding 模型默认使用 [shibing624/text2vec-bge-large-chinese](https://huggingface.co/shibing624/text2vec-bge-large-chinese)，导出模型方法可参考 [export_onnx.py](./scripts/export_onnx.py)
->5. SE9设备运行本项目需要16GB内存版本。
+>4. embedding 模型默认使用 [maidalun1020/bce-embedding-base_v1](https://hf-mirror.com/maidalun1020/bce-embedding-base_v1)，导出模型方法可参考 [export_onnx_bce_embedding.py](./scripts/export_onnx_bce_embedding.py)
+>5. reranker 模型默认使用 [maidalun1020/bce-reranker-base_v1](https://hf-mirror.com/maidalun1020/bce-reranker-base_v1)，导出模型方法可参考 [export_onnx_bce_reranker.py](./scripts/export_onnx_bce_reranker.py)
+>6. bm1688目前不支持BCE模型，embedding模型默认使用[shibing624/text2vec-bge-large-chinese](https://huggingface.co/shibing624/text2vec-bge-large-chinese)，reranker模型默认使用reranker_model。
+>7. SE9设备运行本项目需要16GB内存版本。
 
 ## 操作说明
 

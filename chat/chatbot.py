@@ -87,6 +87,7 @@ class DocChatbot:
             if not emb.flags['C_CONTIGUOUS']:
                 emb = np.ascontiguousarray(emb)
             emb_num = len(emb)
+            self.embeddings_size = emb.shape[1]
             self.vector_db = faiss.IndexFlatL2(self.embeddings_size)
             self.vector_db.add(emb)
             self.string_db = docs

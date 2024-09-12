@@ -19,8 +19,12 @@ class RerankerTPU:
     def __init__(self,):
         config = configparser.ConfigParser()
         config.read('config.ini')
-        bmodel_path = config.get('reranker_model', 'bmodel_path')
-        token_path = config.get('reranker_model', 'token_path')
+        reranker_model = os.getenv("RERANKER_MODEL")
+        if reranker_model not in ["reranker_model", "bce_reranker"]:
+            logging.warning("Reranker model only support reranker_model and bce_reranker, please checkout the env var. Use default reranker_model.")
+            reranker_model = "reranker_model"
+        bmodel_path = config.get(reranker_model, 'bmodel_path')
+        token_path = config.get(reranker_model, 'token_path')
         dev_id = 0
         if os.getenv("DEVICE_ID"):
             dev_id = int(os.getenv("DEVICE_ID"))
@@ -29,6 +33,7 @@ class RerankerTPU:
 
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path = token_path, revision = None, local_files_only = False, trust_remote_code = False)
         self.net = sail.Engine(bmodel_path, dev_id, sail.IOMode.SYSIO)
+        logging.info("load {} success, dev_id {}".format(bmodel_path, dev_id))
         self.graph_name = self.net.get_graph_names()[0]
         self.input_names = self.net.get_input_names(self.graph_name)
         self.output_names = self.net.get_output_names(self.graph_name)
