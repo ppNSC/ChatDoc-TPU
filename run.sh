@@ -19,6 +19,7 @@ dev_id=0
 server_address="0.0.0.0"
 server_port=""
 chip="bm1684x"
+model_type="bce"             # bge or bce
 
 # Args
 parse_args() {
@@ -40,6 +41,10 @@ parse_args() {
                 ;;            
             --chip)
                 chip="$2"
+                shift 2
+                ;;
+            --model_type)
+                model_type="$2"
                 shift 2
                 ;;
             *)
@@ -71,13 +76,26 @@ else
     echo "$HOME/nltk_dat already exist..."
 fi
 
-# download embedding model
+# check model & chip
+if [[ "$model_type" == "bce" ]]; then
+    embedding="bce_embedding"
+    reranker="bce_reranker"
+elif [[ "$model_type" == "bge" ]]; then
+    embedding="bert_model"
+    reranker="reranker_model"
+else
+    echo "Error: Invalid mdoel type $model_type, the input model_type must be \033[31mbce|bge\033[0m. Use bce model defualt."
+    embedding="bce_embedding"
+    reranker="bce_reranker"
+fi
+
 if [[ "$chip" == "bm1688" ]] && [[ "$embedding" == "bce_embedding" || "$reranker" == "bce_reranker" ]]; then
-    echo "Bm1688 chip not support bce model. Use bge model instead."
+    echo "Bm1688 not support bce model. Use bge model instead."
     embedding="bert_model"
     reranker="reranker_model"
 fi
 
+# download embedding model
 if [[ "$embedding" == "bce_embedding" && ! -d "./models/bce_embedding" ]]; then
     echo "./models/bce_embedding does not exist, download..."
     python3 -m dfss --url=open@sophgo.com:ezoo/chatdoc/bce_embedding.zip

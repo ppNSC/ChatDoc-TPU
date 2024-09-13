@@ -87,8 +87,9 @@ pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple && 
 usage: ./run.sh  [--dev_id DEV_ID] [--server_address SERVER_ADDRESS] [--server_port SERVER_PORT] [--chip CHIP]
 --dev_id: 用于推理的 TPU 设备 ID。默认为 0。
 --server_address: web server 地址。默认为 "0.0.0.0"。
---server_port：web sever 端口。如不设置，从 8501 起自动分配。
---chip：需要下载模型对应的芯片类型。如不设置，默认为bm1684x。
+--server_port: web sever 端口。如不设置，从 8501 起自动分配。
+--chip: 需要下载模型对应的芯片类型。如不设置，默认为bm1684x。
+--model_type: embedding和reranker模型的类型。可选bce或bge，默认为bce。
 ```
 
 启动后您可以通过浏览器打开，`URL: http://{host_ip}:8501`，host_ip为启动ChatDoc的设备IP，或者您通过参数设置的`server_address`
