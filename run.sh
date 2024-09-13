@@ -13,8 +13,8 @@ pip3 install dfss -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade
 
 # default param
 llm_model="qwen7b"
-embedding="bert_model"    # bert_model or bce_embedding
-reranker="reranker_model"    # reranker_model or bce_reranker 
+embedding="bce_embedding"    # bert_model or bce_embedding
+reranker="bce_reranker"      # reranker_model or bce_reranker 
 dev_id=0
 server_address="0.0.0.0"
 server_port=""
