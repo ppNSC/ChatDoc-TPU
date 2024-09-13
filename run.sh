@@ -63,19 +63,6 @@ parse_args() {
 parse_args "$@"
 
 
-# nltk_data & embedding model & reranker model are required
-if [ ! -d "$HOME/nltk_data" ]; then
-    echo "$HOME/nltk_dat does not exist, download..."
-    python3 -m dfss --url=open@sophgo.com:ezoo/chatdoc/nltk_data.zip
-    python3 -c "import nltk; nltk.download('punkt_tab')"
-    unzip nltk_data.zip
-    mv nltk_data ~
-    rm nltk_data.zip
-    echo "nltk_data download!"
-else
-    echo "$HOME/nltk_dat already exist..."
-fi
-
 # check model & chip
 if [[ "$model_type" == "bce" ]]; then
     embedding="bce_embedding"
@@ -93,6 +80,19 @@ if [[ "$chip" == "bm1688" ]] && [[ "$embedding" == "bce_embedding" || "$reranker
     echo "Bm1688 not support bce model. Use bge model instead."
     embedding="bert_model"
     reranker="reranker_model"
+fi
+
+# nltk_data & embedding model & reranker model are required
+if [ ! -d "$HOME/nltk_data" ]; then
+    echo "$HOME/nltk_dat does not exist, download..."
+    python3 -m dfss --url=open@sophgo.com:ezoo/chatdoc/nltk_data.zip
+    python3 -c "import nltk; nltk.download('punkt_tab')"
+    unzip nltk_data.zip
+    mv nltk_data ~
+    rm nltk_data.zip
+    echo "nltk_data download!"
+else
+    echo "$HOME/nltk_dat already exist..."
 fi
 
 # download embedding model
